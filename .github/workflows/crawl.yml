@@ -1,8 +1,8 @@
-name: Ajou Notice Crawler
+name: Ajou Data Auto Update
 
 on:
   schedule:
-    - cron: '0 15 * * *' # 한국 시간 00:00
+    - cron: '0 15 * * *' # 한국 시간 매일 00:00
   workflow_dispatch: 
 
 jobs:
@@ -11,19 +11,24 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }} # 파일을 다시 올리기 위한 권한
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11' # 3.9에서 3.11로 업데이트
+          python-version: '3.11'
 
       - name: Install dependencies
-        run: |
-          pip install firebase-admin requests beautifulsoup4
+        run: pip install requests beautifulsoup4
 
-      - name: Run crawlers
-        env:
-          FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+      - name: Run Crawler
+        run: python crawler.py
+
+      - name: Commit and Push changes
         run: |
-          python crawl_to_firestore.py
-          python crawl_meals_to_firestore.py
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add assets/data/*.json
+          git commit -m "Auto update data: $(date +'%Y-%m-%d')" || exit 0
+          git push
