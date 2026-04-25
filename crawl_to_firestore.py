@@ -60,7 +60,8 @@ def crawl_and_update():
                     
                 doc_id = link.split('articleNo=')[1].split('&')[0] if 'articleNo=' in link else str(hash(link))
                 
-                doc_ref = db.collection('notices').doc(doc_id)
+                # 파이썬 SDK에서는 .document()를 사용해야 함
+                doc_ref = db.collection('notices').document(doc_id)
                 batch.set(doc_ref, {
                     'id': doc_id,
                     'title': title,
