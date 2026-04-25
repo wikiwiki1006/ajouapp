@@ -3,167 +3,153 @@ from bs4 import BeautifulSoup
 import json
 import os
 from datetime import datetime, timedelta
+import re
+import time
 
 def get_date_list():
     date_list = []
     current = datetime.now()
-    # 현재 날짜로부터 7일치 데이터 수집 (주말 포함)
-    for i in range(7):
+    for i in range(-1, 8):
         target = current + timedelta(days=i)
         date_list.append(target.strftime('%Y-%m-%d'))
     return date_list
 
 def crawl_ajou_meals():
-    print("Crawling Ajou Meals with updated structure...")
-    cafeterias = {
-        'dormitory': '363910', # 기숙사식당
-        'staff': '221904'      # 교직원식당
-    }
-    
+    print("Crawling Ajou Meals...")
+    cafeterias = {'dormitory': '363910', 'staff': '221904'}
     date_list = get_date_list()
     final_data = {}
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
 
     for date_str in date_list:
-        weekday_map = ['월', '화', '수', '목', '금', '토', '일']
-        dt = datetime.strptime(date_str, '%Y-%m-%d')
-        day_name = weekday_map[dt.weekday()]
-        
-        display_key = f"{day_name} ({date_str})"
-        final_data[display_key] = {}
+        try:
+            dt = datetime.strptime(date_str, '%Y-%m-%d')
+            day_name = ['월', '화', '수', '목', '금', '토', '일'][dt.weekday()]
+            display_key = f"{day_name} ({date_str})"
+            final_data[display_key] = {}
 
-        for cafe_name, cafe_id in cafeterias.items():
-            url = f"https://www.ajou.ac.kr/kr/life/food.do?mode=view&articleNo={cafe_id}&date={date_str}"
-            try:
-                headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
-                response = requests.get(url, headers=headers, timeout=10)
-                response.encoding = 'utf-8' # 인코딩 명시
-                soup = BeautifulSoup(response.text, 'html.parser')
+            for cafe_name, cafe_id in cafeterias.items():
+                url = f"https://www.ajou.ac.kr/kr/life/food.do?mode=view&articleNo={cafe_id}&date={date_str}"
+                resp = requests.get(url, headers=headers, timeout=15)
+                resp.encoding = 'utf-8'
+                soup = BeautifulSoup(resp.text, 'html.parser')
+                meal_info = {'breakfast': '정보 없음', 'lunch': '정보 없음', 'dinner': '정보 없음'}
+                if cafe_name == 'dormitory': meal_info['snack'] = '정보 없음'
+
+                found = False
+                for key, sel in {'breakfast':'.breakfast', 'lunch':'.lunch', 'dinner':'.dinner', 'snack':'.snackBar'}.items():
+                    if key not in meal_info: continue
+                    sec = soup.select_one(f'.b-menu-day{sel}')
+                    if sec and sec.select_one('pre'):
+                        txt = sec.select_one('pre').get_text(separator="\n", strip=True)
+                        if txt and "등록된 식단이 없습니다" not in txt:
+                            meal_info[key] = txt
+                            found = True
                 
-                meal_info = {
-                    'breakfast': '정보 없음',
-                    'lunch': '정보 없음',
-                    'dinner': '정보 없음'
-                }
-                if cafe_name == 'dormitory':
-                    meal_info['snack'] = '정보 없음'
-
-                # New structure: .b-menu-day.breakfast, etc.
-                mappings = {
-                    'breakfast': '.b-menu-day.breakfast',
-                    'lunch': '.b-menu-day.lunch',
-                    'dinner': '.b-menu-day.dinner'
-                }
-                if cafe_name == 'dormitory':
-                    mappings['snack'] = '.b-menu-day.snackBar'
-
-                for key, selector in mappings.items():
-                    container = soup.select_one(selector)
-                    if container:
-                        menu_content = container.select_one('pre')
-                        if menu_content:
-                            text = menu_content.get_text(separator="\n", strip=True)
-                            # Clean up
-                            if not text or "등록된 식단이 없습니다" in text or "식단이 없습니다" in text:
-                                text = "정보 없음"
-                            meal_info[key] = text
-                
+                if not found:
+                    pres = soup.select('.food_view pre, .b-menu-day pre, pre')
+                    combined = "\n".join([p.get_text(separator="\n", strip=True) for p in pres])
+                    if combined.strip() and "등록된 식단이 없습니다" not in combined:
+                        if "[중식]" in combined or "[석식]" in combined:
+                            l_m = re.search(r'\[중식\].*?(?=\[석식\]|$)', combined, re.DOTALL)
+                            d_m = re.search(r'\[석식\].*$', combined, re.DOTALL)
+                            if l_m: meal_info['lunch'] = l_m.group(0).strip()
+                            if d_m: meal_info['dinner'] = d_m.group(0).strip()
+                        else:
+                            meal_info['lunch'] = combined.strip()
                 final_data[display_key][cafe_name] = meal_info
-                print(f"  Fetched {cafe_name} for {date_str}")
-                        
-            except Exception as e:
-                print(f"Error crawling {cafe_name} on {date_str}: {e}")
-                
+        except: pass
     return final_data
 
 def crawl_notices():
-    print("Crawling notices from 2026-01-01...")
+    print("Crawling notices from 2026-03-01...")
     base_url = "https://www.ajou.ac.kr/kr/ajou/notice.do"
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
     
-    pinned_notices = []
     regular_notices = []
+    pinned_notices = []
+    seen_ids = set() # 일반 공지 중복 방지용
+    target_dt = datetime(2026, 3, 1)
     
     offset = 0
-    limit = 10
-    target_date = datetime(2026, 1, 1)
-    reached_target = False
-    
-    while not reached_target:
-        url = f"{base_url}?article.offset={offset}&articleLimit={limit}"
+    limit = 50 
+    reached_end = False
+
+    while not reached_end:
+        url = f"{base_url}?mode=list&&articleLimit={limit}&article.offset={offset}"
         try:
-            response = requests.get(url, headers=headers, timeout=10)
-            response.encoding = 'utf-8'
-            soup = BeautifulSoup(response.text, 'html.parser')
+            resp = requests.get(url, headers=headers, timeout=20)
+            resp.encoding = 'utf-8'
+            soup = BeautifulSoup(resp.text, 'html.parser')
             rows = soup.select('tbody tr')
-            
-            if not rows:
-                break
-                
-            page_has_new_regular = False
+            if not rows: break
+
             for row in rows:
-                num_box = row.select_one('.b-num-box')
-                is_pinned = "num-notice" in num_box.get("class", []) if num_box else False
+                tds = row.select('td')
+                if len(tds) < 5: continue
                 
-                title_elem = row.select_one('.b-title-box a')
-                date_elem = row.select_one('td:nth-last-child(1)') # Date is usually the last td
+                is_pinned = "공지" in tds[0].get_text(strip=True)
+                a_tag = row.select_one('.b-title-box a')
+                if not a_tag: continue
                 
-                if title_elem and date_elem:
-                    title = title_elem.get_text(strip=True)
-                    # Remove [공지] prefix from title if exists
-                    if title.startswith("[공지]"):
-                        title = title[4:].strip()
-                        
-                    link = f"{base_url}{title_elem['href']}"
-                    date_str = date_elem.get_text(strip=True)
-                    try:
-                        dt = datetime.strptime(date_str, '%Y-%m-%d')
-                    except:
-                        continue
+                title = a_tag.get_text(strip=True).replace("[공지]", "").strip()
+                link = f"{base_url}{a_tag['href']}" if a_tag['href'].startswith('?') else a_tag['href']
+                
+                ano_match = re.search(r'articleNo=(\d+)', link)
+                ano = ano_match.group(1) if ano_match else link
 
-                    notice_item = {
-                        'title': title,
-                        'link': link,
-                        'date': date_str,
-                        'is_pinned': is_pinned
-                    }
+                dt = None
+                date_str = ""
+                for td in reversed(tds):
+                    txt = td.get_text(strip=True)
+                    if re.match(r'\d{4}-\d{2}-\d{2}', txt):
+                        dt = datetime.strptime(txt, '%Y-%m-%d')
+                        date_str = txt
+                        break
+                
+                if not dt: continue
 
-                    if is_pinned:
-                        # Only collect pinned notices from the first page
-                        if offset == 0:
-                            pinned_notices.append(notice_item)
+                if is_pinned:
+                    # 고정 공지는 첫 페이지(offset=0)에서만 수집
+                    if offset == 0:
+                        pinned_notices.append({'title': title, 'link': link, 'date': date_str, 'is_pinned': True})
+                else:
+                    if dt >= target_dt:
+                        if ano not in seen_ids:
+                            regular_notices.append({'title': title, 'link': link, 'date': date_str, 'is_pinned': False})
+                            seen_ids.add(ano)
                     else:
-                        if dt >= target_date:
-                            regular_notices.append(notice_item)
-                            page_has_new_regular = True
-                        else:
-                            reached_target = True
+                        reached_end = True
+                        break
             
-            if not page_has_new_regular and offset > 0 and not is_pinned: # Safety break
-                 # If we are past the first page and didn't find any regular notices >= target_date
-                 # but we need to be careful because pinned notices are on every page
-                 pass
-
-            if reached_target:
-                break
-                
+            print(f"  Offset {offset}: currently have {len(regular_notices)} regular notices.")
+            if reached_end: break
             offset += limit
-            print(f"  Fetched offset {offset}...")
+            time.sleep(0.2)
             
         except Exception as e:
             print(f"  Error at offset {offset}: {e}")
             break
             
-    # Combine: Pinned at top, then regular
-    return pinned_notices + regular_notices
+    final_list = pinned_notices + sorted(regular_notices, key=lambda x: x['date'], reverse=True)
+    print(f"  Total combined notices: {len(final_list)}")
+    return final_list
 
 if __name__ == "__main__":
-    os.makedirs('assets/data', exist_ok=True)
-    # 공지사항 업데이트
-    notices = crawl_notices()
-    with open('assets/data/notices.json', 'w', encoding='utf-8') as f:
-        json.dump(notices, f, ensure_ascii=False, indent=2)
-    # 식단 업데이트
-    meals = crawl_ajou_meals()
-    with open('assets/data/meals.json', 'w', encoding='utf-8') as f:
-        json.dump(meals, f, ensure_ascii=False, indent=2)
-    print("Data update completed successfully.")
+    # 프로젝트 구조에 맞춰 저장 경로 설정
+    base_path = os.path.join(os.path.dirname(__file__), 'assets', 'data')
+    os.makedirs(base_path, exist_ok=True)
+    
+    # 공지사항
+    results = crawl_notices()
+    notice_file = os.path.join(base_path, 'notices.json')
+    with open(notice_file, 'w', encoding='utf-8') as f:
+        json.dump(results, f, ensure_ascii=False, indent=2)
+    
+    # 식단
+    meal_data = crawl_ajou_meals()
+    meal_file = os.path.join(base_path, 'meals.json')
+    with open(meal_file, 'w', encoding='utf-8') as f:
+        json.dump(meal_data, f, ensure_ascii=False, indent=2)
+    
+    print(f"Script finished. Files saved in: {base_path}")
