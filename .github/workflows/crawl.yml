@@ -21,7 +21,9 @@ jobs:
         run: |
           pip install firebase-admin requests beautifulsoup4
 
-      - name: Run crawler
+      - name: Run crawlers
         env:
           FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
-        run: python crawl_to_firestore.py
+        run: |
+          python crawl_to_firestore.py
+          python crawl_meals_to_firestore.py
