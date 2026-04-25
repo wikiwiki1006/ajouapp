@@ -1,1 +1,27 @@
-{}
+{
+  "월": {
+    "breakfast": "정보 없음",
+    "lunch": "정보 없음",
+    "dinner": "정보 없음"
+  },
+  "화": {
+    "breakfast": "정보 없음",
+    "lunch": "정보 없음",
+    "dinner": "정보 없음"
+  },
+  "수": {
+    "breakfast": "정보 없음",
+    "lunch": "정보 없음",
+    "dinner": "정보 없음"
+  },
+  "목": {
+    "breakfast": "정보 없음",
+    "lunch": "정보 없음",
+    "dinner": "정보 없음"
+  },
+  "금": {
+    "breakfast": "정보 없음",
+    "lunch": "정보 없음",
+    "dinner": "정보 없음"
+  }
+}
