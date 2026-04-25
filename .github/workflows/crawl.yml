@@ -2,18 +2,18 @@ name: Ajou Notice Crawler
 
 on:
   schedule:
-    - cron: '0 15 * * *' # UTC 기준 15:00 (한국 시간 00:00)
-  workflow_dispatch: # 수동 실행 버튼 추가
+    - cron: '0 15 * * *' # 한국 시간 00:00
+  workflow_dispatch: 
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4 # v3 -> v4 업데이트
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5 # v4 -> v5 업데이트
         with:
           python-version: '3.9'
 
