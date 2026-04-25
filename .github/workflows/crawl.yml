@@ -1,0 +1,27 @@
+name: Ajou Notice Crawler
+
+on:
+  schedule:
+    - cron: '0 15 * * *' # UTC 기준 15:00 (한국 시간 00:00)
+  workflow_dispatch: # 수동 실행 버튼 추가
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          pip install firebase-admin requests beautifulsoup4
+
+      - name: Run crawler
+        env:
+          FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+        run: python crawl_to_firestore.py
