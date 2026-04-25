@@ -7,20 +7,17 @@ from datetime import datetime, timedelta
 def get_date_list():
     date_list = []
     current = datetime.now()
-    # 오늘부터 최대 10일치 데이터를 가져오도록 설정
-    for i in range(10):
+    # 현재 날짜로부터 7일치 데이터 수집 (주말 포함)
+    for i in range(7):
         target = current + timedelta(days=i)
-        if target.weekday() < 5: # 월~금만 포함
-            date_list.append(target.strftime('%Y-%m-%d'))
+        date_list.append(target.strftime('%Y-%m-%d'))
     return date_list
 
 def crawl_ajou_meals():
-    print("Crawling Ajou Meals via <pre> tags...")
-    
-    # 식당 ID (221903: 기숙사/학생식당, 221904: 교직원식당)
+    print("Crawling Ajou Meals with updated structure...")
     cafeterias = {
-        'dormitory': '221903',
-        'staff': '221904'
+        'dormitory': '363910', # 기숙사식당
+        'staff': '221904'      # 교직원식당
     }
     
     date_list = get_date_list()
@@ -32,38 +29,47 @@ def crawl_ajou_meals():
         day_name = weekday_map[dt.weekday()]
         
         display_key = f"{day_name} ({date_str})"
-        final_data[display_key] = {
-            'dormitory': {'breakfast': '정보 없음', 'lunch': '정보 없음', 'dinner': '정보 없음'},
-            'staff': {'breakfast': '정보 없음', 'lunch': '정보 없음', 'dinner': '정보 없음'}
-        }
+        final_data[display_key] = {}
 
         for cafe_name, cafe_id in cafeterias.items():
             url = f"https://www.ajou.ac.kr/kr/life/food.do?mode=view&articleNo={cafe_id}&date={date_str}"
             try:
-                response = requests.get(url, timeout=10)
+                headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
+                response = requests.get(url, headers=headers, timeout=10)
+                response.encoding = 'utf-8' # 인코딩 명시
                 soup = BeautifulSoup(response.text, 'html.parser')
                 
-                # <pre> 태그들을 모두 찾습니다.
-                # 순서: 0:아침, 1:점심, 2:저녁, 3:분식
-                pre_tags = soup.select('.food_menu_list pre')
+                meal_info = {
+                    'breakfast': '정보 없음',
+                    'lunch': '정보 없음',
+                    'dinner': '정보 없음'
+                }
+                if cafe_name == 'dormitory':
+                    meal_info['snack'] = '정보 없음'
+
+                # New structure: .b-menu-day.breakfast, etc.
+                mappings = {
+                    'breakfast': '.b-menu-day.breakfast',
+                    'lunch': '.b-menu-day.lunch',
+                    'dinner': '.b-menu-day.dinner'
+                }
+                if cafe_name == 'dormitory':
+                    mappings['snack'] = '.b-menu-day.snackBar'
+
+                for key, selector in mappings.items():
+                    container = soup.select_one(selector)
+                    if container:
+                        menu_content = container.select_one('pre')
+                        if menu_content:
+                            text = menu_content.get_text(separator="\n", strip=True)
+                            # Clean up
+                            if not text or "등록된 식단이 없습니다" in text or "식단이 없습니다" in text:
+                                text = "정보 없음"
+                            meal_info[key] = text
                 
-                if len(pre_tags) >= 3:
-                    final_data[display_key][cafe_name]['breakfast'] = pre_tags[0].get_text(strip=True)
-                    final_data[display_key][cafe_name]['lunch'] = pre_tags[1].get_text(strip=True)
-                    final_data[display_key][cafe_name]['dinner'] = pre_tags[2].get_text(strip=True)
-                else:
-                    # 구조가 다를 경우를 대비한 대체 로직 (전체 텍스트에서 찾기)
-                    items = soup.select('.food_menu_list > li')
-                    for item in items:
-                        meal_time = item.select_one('strong').get_text(strip=True)
-                        menu_text = item.select_one('pre').get_text(strip=True) if item.select_one('pre') else item.get_text(strip=True)
+                final_data[display_key][cafe_name] = meal_info
+                print(f"  Fetched {cafe_name} for {date_str}")
                         
-                        if "아침" in meal_time:
-                            final_data[display_key][cafe_name]['breakfast'] = menu_text
-                        elif "점심" in meal_time:
-                            final_data[display_key][cafe_name]['lunch'] = menu_text
-                        elif "저녁" in meal_time:
-                            final_data[display_key][cafe_name]['dinner'] = menu_text
             except Exception as e:
                 print(f"Error crawling {cafe_name} on {date_str}: {e}")
                 
@@ -87,18 +93,16 @@ def crawl_notices():
                 notices.append({'title': title, 'link': link, 'date': date_str})
         return notices
     except Exception as e:
-        print(f"Notice crawl error: {e}")
         return []
 
 if __name__ == "__main__":
     os.makedirs('assets/data', exist_ok=True)
-    
+    # 공지사항 업데이트
     notices = crawl_notices()
     with open('assets/data/notices.json', 'w', encoding='utf-8') as f:
         json.dump(notices, f, ensure_ascii=False, indent=2)
-        
+    # 식단 업데이트
     meals = crawl_ajou_meals()
     with open('assets/data/meals.json', 'w', encoding='utf-8') as f:
         json.dump(meals, f, ensure_ascii=False, indent=2)
-        
-    print(f"Update complete! {len(notices)} notices and {len(meals)} days of meals saved.")
+    print("Data update completed successfully.")
