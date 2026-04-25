@@ -2,6 +2,67 @@ import requests
 from bs4 import BeautifulSoup
 import json
 import os
+from datetime import datetime, timedelta
+
+def get_date_list():
+    # 오늘부터 다음 주 금요일까지의 날짜 리스트 생성
+    date_list = []
+    current = datetime.now()
+    # 최대 10일치 데이터를 가져오도록 설정
+    for i in range(10):
+        target = current + timedelta(days=i)
+        if target.weekday() < 5: # 월~금만 포함
+            date_list.append(target.strftime('%Y-%m-%d'))
+    return date_list
+
+def crawl_ajou_meals():
+    print("Crawling Ajou Meals (Dormitory & Staff)...")
+    
+    # 식당 ID (221903: 기숙사/학생식당, 221904: 교직원식당)
+    cafeterias = {
+        'dormitory': '221903',
+        'staff': '221904'
+    }
+    
+    date_list = get_date_list()
+    final_data = {}
+
+    for date_str in date_list:
+        # 요일 계산 (월, 화, 수...)
+        weekday_map = ['월', '화', '수', '목', '금', '토', '일']
+        dt = datetime.strptime(date_str, '%Y-%m-%d')
+        day_name = weekday_map[dt.weekday()]
+        
+        # 앱에서 요일별로 쉽게 찾을 수 있도록 key 설정 (예: "월 (2026-04-27)")
+        display_key = f"{day_name} ({date_str})"
+        final_data[display_key] = {
+            'dormitory': {'breakfast': '정보 없음', 'lunch': '정보 없음', 'dinner': '정보 없음'},
+            'staff': {'breakfast': '정보 없음', 'lunch': '정보 없음', 'dinner': '정보 없음'}
+        }
+
+        for cafe_name, cafe_id in cafeterias.items():
+            url = f"https://www.ajou.ac.kr/kr/life/food.do?mode=view&articleNo={cafe_id}&date={date_str}"
+            try:
+                response = requests.get(url, timeout=10)
+                soup = BeautifulSoup(response.text, 'html.parser')
+                
+                # 식사 시간대별 탭 섹션 찾기 (아주대 페이지 특유의 구조)
+                menu_items = soup.select('.food_menu_list > li')
+                for item in menu_items:
+                    meal_time = item.select_one('strong').get_text(strip=True) # 아침, 점심, 저녁
+                    # 메뉴 텍스트 추출 (불필요한 공백 및 중복 제거)
+                    menu_text = item.select_one('.menu_txt').get_text(separator="\n", strip=True)
+                    
+                    if "아침" in meal_time:
+                        final_data[display_key][cafe_name]['breakfast'] = menu_text
+                    elif "점심" in meal_time:
+                        final_data[display_key][cafe_name]['lunch'] = menu_text
+                    elif "저녁" in meal_time:
+                        final_data[display_key][cafe_name]['dinner'] = menu_text
+            except Exception as e:
+                print(f"Error crawling {cafe_name} on {date_str}: {e}")
+                
+    return final_data
 
 def crawl_notices():
     print("Crawling notices...")
@@ -24,61 +85,17 @@ def crawl_notices():
         print(f"Notice crawl error: {e}")
         return []
 
-def crawl_meals():
-    print("Crawling meals...")
-    url = "https://www.ajou.ac.kr/kr/life/food.do"
-    try:
-        response = requests.get(url, timeout=10)
-        soup = BeautifulSoup(response.text, 'html.parser')
-        
-        days = ['월', '화', '수', '목', '금']
-        meal_data = {day: {'breakfast': '정보 없음', 'lunch': '정보 없음', 'dinner': '정보 없음'} for day in days}
-        
-        # 아주대 식단표는 보통 .b-board-table 또는 table 내의 tbody tr 구조입니다.
-        table = soup.select_one('table')
-        if not table:
-            print("No meal table found.")
-            return meal_data
-
-        rows = table.select('tbody tr')
-        for row in rows:
-            header = row.select_one('th')
-            if not header: continue
-            
-            meal_type = header.get_text(strip=True)
-            cells = row.select('td')
-            
-            for i, cell in enumerate(cells):
-                if i < len(days):
-                    day = days[i]
-                    # 메뉴 텍스트를 줄바꿈을 유지하며 가져옵니다.
-                    menu = cell.get_text(separator="\n", strip=True)
-                    if not menu: menu = "정보 없음"
-                    
-                    if "조식" in meal_type:
-                        meal_data[day]['breakfast'] = menu
-                    elif "중식" in meal_type:
-                        meal_data[day]['lunch'] = menu
-                    elif "석식" in meal_type:
-                        meal_data[day]['dinner'] = menu
-        
-        return meal_data
-    except Exception as e:
-        print(f"Meal crawl error: {e}")
-        return {day: {'breakfast': '오류 발생', 'lunch': '오류 발생', 'dinner': '오류 발생'} for day in days}
-
 if __name__ == "__main__":
-    # 폴더 생성
     os.makedirs('assets/data', exist_ok=True)
     
     # 공지사항 저장
     notices = crawl_notices()
     with open('assets/data/notices.json', 'w', encoding='utf-8') as f:
         json.dump(notices, f, ensure_ascii=False, indent=2)
-    print(f"Successfully saved {len(notices)} notices.")
         
-    # 식단 저장
-    meals = crawl_meals()
+    # 식단 저장 (개편된 버전)
+    meals = crawl_ajou_meals()
     with open('assets/data/meals.json', 'w', encoding='utf-8') as f:
         json.dump(meals, f, ensure_ascii=False, indent=2)
-    print("Successfully saved meals.")
+        
+    print(f"Update complete! {len(notices)} notices and {len(meals)} days of meals saved.")
