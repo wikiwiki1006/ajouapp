@@ -1,27 +1,74 @@
 {
-  "월": {
-    "breakfast": "정보 없음",
-    "lunch": "정보 없음",
-    "dinner": "정보 없음"
+  "월 (2026-04-27)": {
+    "dormitory": {
+      "breakfast": "정보 없음",
+      "lunch": "정보 없음",
+      "dinner": "정보 없음"
+    },
+    "staff": {
+      "breakfast": "정보 없음",
+      "lunch": "정보 없음",
+      "dinner": "정보 없음"
+    }
   },
-  "화": {
-    "breakfast": "정보 없음",
-    "lunch": "정보 없음",
-    "dinner": "정보 없음"
+  "화 (2026-04-28)": {
+    "dormitory": {
+      "breakfast": "정보 없음",
+      "lunch": "정보 없음",
+      "dinner": "정보 없음"
+    },
+    "staff": {
+      "breakfast": "정보 없음",
+      "lunch": "정보 없음",
+      "dinner": "정보 없음"
+    }
   },
-  "수": {
-    "breakfast": "정보 없음",
-    "lunch": "정보 없음",
-    "dinner": "정보 없음"
+  "수 (2026-04-29)": {
+    "dormitory": {
+      "breakfast": "정보 없음",
+      "lunch": "정보 없음",
+      "dinner": "정보 없음"
+    },
+    "staff": {
+      "breakfast": "정보 없음",
+      "lunch": "정보 없음",
+      "dinner": "정보 없음"
+    }
   },
-  "목": {
-    "breakfast": "정보 없음",
-    "lunch": "정보 없음",
-    "dinner": "정보 없음"
+  "목 (2026-04-30)": {
+    "dormitory": {
+      "breakfast": "정보 없음",
+      "lunch": "정보 없음",
+      "dinner": "정보 없음"
+    },
+    "staff": {
+      "breakfast": "정보 없음",
+      "lunch": "정보 없음",
+      "dinner": "정보 없음"
+    }
   },
-  "금": {
-    "breakfast": "정보 없음",
-    "lunch": "정보 없음",
-    "dinner": "정보 없음"
+  "금 (2026-05-01)": {
+    "dormitory": {
+      "breakfast": "정보 없음",
+      "lunch": "정보 없음",
+      "dinner": "정보 없음"
+    },
+    "staff": {
+      "breakfast": "정보 없음",
+      "lunch": "정보 없음",
+      "dinner": "정보 없음"
+    }
+  },
+  "월 (2026-05-04)": {
+    "dormitory": {
+      "breakfast": "정보 없음",
+      "lunch": "정보 없음",
+      "dinner": "정보 없음"
+    },
+    "staff": {
+      "breakfast": "정보 없음",
+      "lunch": "정보 없음",
+      "dinner": "정보 없음"
+    }
   }
 }
