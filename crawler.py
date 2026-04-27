@@ -123,8 +123,12 @@ def crawl_notices():
                         pinned_notices.append({'title': title, 'link': link, 'date': date_str, 'is_pinned': True})
                 else:
                     if ano in existing_ids:
-                        reached_existing = True
-                        break
+                        # 첫 페이지(offset 0)에서는 기존 ID가 나와도 멈추지 않고 끝까지 확인 (순서 꼬임 방지)
+                        if offset > 0:
+                            reached_existing = True
+                            break
+                        else:
+                            continue 
                     else:
                         new_regular_notices.append({'title': title, 'link': link, 'date': date_str, 'is_pinned': False})
             
@@ -137,9 +141,11 @@ def crawl_notices():
             print(f"  Error: {e}")
             break
             
+    # 중복 제거 (혹시라도 첫 페이지에서 기존 것과 겹친 경우를 위해)
     old_regular_notices = [n for n in existing_notices if not n.get('is_pinned')]
-    combined_regular = new_regular_notices + old_regular_notices
-    final_list = pinned_notices + combined_regular
+    
+    # 최종 목록 생성 (고정 공지 + 새로운 일반 공지 + 기존 일반 공지)
+    final_list = pinned_notices + new_regular_notices + old_regular_notices
     
     print(f"  New regular notices found: {len(new_regular_notices)}")
     print(f"  Total notices: {len(final_list)}")
