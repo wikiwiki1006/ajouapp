@@ -2,7 +2,7 @@ name: Ajou Data Auto Update
 
 on:
   schedule:
-    - cron: '0 15 * * *' # 한국 시간 매일 00:00
+    - cron: '0 3,15 * * *' # 한국 시간 매일 00:00, 12:00
   workflow_dispatch: 
 
 jobs:
