@@ -15,41 +15,53 @@ def get_date_list():
     return date_list
 
 def crawl_ajou_meals():
-    print("Crawling Ajou Meals...")
     cafeterias = {'dormitory': '363910', 'staff': '221904'}
     date_list = get_date_list()
     final_data = {}
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
 
     for date_str in date_list:
-        try:
-            dt = datetime.strptime(date_str, '%Y-%m-%d')
-            day_name = ['월', '화', '수', '목', '금', '토', '일'][dt.weekday()]
-            display_key = f"{day_name} ({date_str})"
-            final_data[display_key] = {}
+        dt = datetime.strptime(date_str, '%Y-%m-%d')
+        day_name = ['월', '화', '수', '목', '금', '토', '일'][dt.weekday()]
+        display_key = f"{day_name} ({date_str})"
+        final_data[display_key] = {}
 
-            for cafe_name, cafe_id in cafeterias.items():
+        for cafe_name, cafe_id in cafeterias.items():
+            meal_info = {'breakfast': '정보 없음', 'lunch': '정보 없음', 'dinner': '정보 없음'}
+            if cafe_name == 'dormitory': meal_info['snack'] = '정보 없음'
+            
+            try:
                 url = f"https://www.ajou.ac.kr/kr/life/food.do?mode=view&articleNo={cafe_id}&date={date_str}"
                 resp = requests.get(url, headers=headers, timeout=15)
                 resp.encoding = 'utf-8'
                 soup = BeautifulSoup(resp.text, 'html.parser')
-                meal_info = {'breakfast': '정보 없음', 'lunch': '정보 없음', 'dinner': '정보 없음'}
-                if cafe_name == 'dormitory': meal_info['snack'] = '정보 없음'
 
                 found = False
                 for key, sel in {'breakfast':'.breakfast', 'lunch':'.lunch', 'dinner':'.dinner', 'snack':'.snackBar'}.items():
                     if key not in meal_info: continue
                     sec = soup.select_one(f'.b-menu-day{sel}')
-                    if sec and sec.select_one('pre'):
-                        txt = sec.select_one('pre').get_text(separator="\n", strip=True)
-                        if txt and "등록된 식단이 없습니다" not in txt:
-                            meal_info[key] = txt
+                    if sec:
+                        pres = sec.select('pre')
+                        valid_texts = []
+                        for p in pres:
+                            txt = p.get_text(separator="\n", strip=True)
+                            if txt and "등록된 식단이 없습니다" not in txt:
+                                valid_texts.append(txt)
+                        
+                        if valid_texts:
+                            meal_info[key] = "\n".join(valid_texts)
                             found = True
                 
                 if not found:
                     pres = soup.select('.food_view pre, .b-menu-day pre, pre')
-                    combined = "\n".join([p.get_text(separator="\n", strip=True) for p in pres])
-                    if combined.strip() and "등록된 식단이 없습니다" not in combined:
+                    valid_pres = []
+                    for p in pres:
+                        txt = p.get_text(separator="\n", strip=True)
+                        if txt and "등록된 식단이 없습니다" not in txt and "운영시간" not in txt:
+                            valid_pres.append(txt)
+                    
+                    if valid_pres:
+                        combined = "\n".join(valid_pres)
                         if "[중식]" in combined or "[석식]" in combined:
                             l_m = re.search(r'\[중식\].*?(?=\[석식\]|$)', combined, re.DOTALL)
                             d_m = re.search(r'\[석식\].*$', combined, re.DOTALL)
@@ -57,8 +69,15 @@ def crawl_ajou_meals():
                             if d_m: meal_info['dinner'] = d_m.group(0).strip()
                         else:
                             meal_info['lunch'] = combined.strip()
-                final_data[display_key][cafe_name] = meal_info
-        except: pass
+                
+                for k in meal_info:
+                    if "운영시간" in meal_info[k] and len(meal_info[k]) < 100 and "코너" not in meal_info[k]:
+                        meal_info[k] = "정보 없음"
+
+            except Exception:
+                pass
+            
+            final_data[display_key][cafe_name] = meal_info
     return final_data
 
 def crawl_notices():
