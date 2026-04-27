@@ -62,20 +62,35 @@ def crawl_ajou_meals():
     return final_data
 
 def crawl_notices():
-    print("Crawling notices from 2026-03-01...")
+    print("Crawling new notices...")
     base_url = "https://www.ajou.ac.kr/kr/ajou/notice.do"
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
     
-    regular_notices = []
+    base_path = os.path.join(os.path.dirname(__file__), 'assets', 'data')
+    notice_file = os.path.join(base_path, 'notices.json')
+    
+    existing_notices = []
+    if os.path.exists(notice_file):
+        try:
+            with open(notice_file, 'r', encoding='utf-8') as f:
+                existing_notices = json.load(f)
+        except:
+            existing_notices = []
+    
+    def get_article_no(link):
+        match = re.search(r'articleNo=(\d+)', link)
+        return match.group(1) if match else link
+
+    existing_ids = {get_article_no(n['link']) for n in existing_notices if not n.get('is_pinned')}
+    
+    new_regular_notices = []
     pinned_notices = []
-    seen_ids = set() # 일반 공지 중복 방지용
-    target_dt = datetime(2026, 3, 1)
     
     offset = 0
     limit = 50 
-    reached_end = False
+    reached_existing = False
 
-    while not reached_end:
+    while not reached_existing:
         url = f"{base_url}?mode=list&&articleLimit={limit}&article.offset={offset}"
         try:
             resp = requests.get(url, headers=headers, timeout=20)
@@ -94,45 +109,40 @@ def crawl_notices():
                 
                 title = a_tag.get_text(strip=True).replace("[공지]", "").strip()
                 link = f"{base_url}{a_tag['href']}" if a_tag['href'].startswith('?') else a_tag['href']
-                
-                ano_match = re.search(r'articleNo=(\d+)', link)
-                ano = ano_match.group(1) if ano_match else link
+                ano = get_article_no(link)
 
-                dt = None
                 date_str = ""
                 for td in reversed(tds):
                     txt = td.get_text(strip=True)
                     if re.match(r'\d{4}-\d{2}-\d{2}', txt):
-                        dt = datetime.strptime(txt, '%Y-%m-%d')
                         date_str = txt
                         break
                 
-                if not dt: continue
-
                 if is_pinned:
-                    # 고정 공지는 첫 페이지(offset=0)에서만 수집
                     if offset == 0:
                         pinned_notices.append({'title': title, 'link': link, 'date': date_str, 'is_pinned': True})
                 else:
-                    if dt >= target_dt:
-                        if ano not in seen_ids:
-                            regular_notices.append({'title': title, 'link': link, 'date': date_str, 'is_pinned': False})
-                            seen_ids.add(ano)
-                    else:
-                        reached_end = True
+                    if ano in existing_ids:
+                        reached_existing = True
                         break
+                    else:
+                        new_regular_notices.append({'title': title, 'link': link, 'date': date_str, 'is_pinned': False})
             
-            print(f"  Offset {offset}: currently have {len(regular_notices)} regular notices.")
-            if reached_end: break
+            if reached_existing: break
             offset += limit
             time.sleep(0.2)
-            
+            if offset > 500: break
+                
         except Exception as e:
-            print(f"  Error at offset {offset}: {e}")
+            print(f"  Error: {e}")
             break
             
-    final_list = pinned_notices + sorted(regular_notices, key=lambda x: x['date'], reverse=True)
-    print(f"  Total combined notices: {len(final_list)}")
+    old_regular_notices = [n for n in existing_notices if not n.get('is_pinned')]
+    combined_regular = new_regular_notices + old_regular_notices
+    final_list = pinned_notices + combined_regular
+    
+    print(f"  New regular notices found: {len(new_regular_notices)}")
+    print(f"  Total notices: {len(final_list)}")
     return final_list
 
 if __name__ == "__main__":
