@@ -1,5 +1,11 @@
 [
   {
+    "title": "[학부] 2026-2학기 시간제등록생 신청 기간 안내(07.01.~07.08.)",
+    "link": "https://www.ajou.ac.kr/kr/ajou/notice.do?mode=view&articleNo=370361&article.offset=0&articleLimit=50",
+    "date": "2026-06-15",
+    "is_pinned": true
+  },
+  {
     "title": "[학사] 2026-2학기 휴학/복학 신청 안내",
     "link": "https://www.ajou.ac.kr/kr/ajou/notice.do?mode=view&articleNo=370302&article.offset=0&articleLimit=50",
     "date": "2026-06-15",
@@ -9,6 +15,12 @@
     "title": "[학부][졸업]2026-2학기 학사학위취득유예(학취유), 졸업연기 신청 안내",
     "link": "https://www.ajou.ac.kr/kr/ajou/notice.do?mode=view&articleNo=370240&article.offset=0&articleLimit=50",
     "date": "2026-06-12",
+    "is_pinned": true
+  },
+  {
+    "title": "[학부/학사과정] 2026학년도 하계 계절수업 추가 등록 일정 안내",
+    "link": "https://www.ajou.ac.kr/kr/ajou/notice.do?mode=view&articleNo=370188&article.offset=0&articleLimit=50",
+    "date": "2026-06-11",
     "is_pinned": true
   },
   {
@@ -64,6 +76,36 @@
     "link": "https://www.ajou.ac.kr/kr/ajou/notice.do?mode=view&articleNo=324578&article.offset=0&articleLimit=50",
     "date": "2024-08-21",
     "is_pinned": true
+  },
+  {
+    "title": "[중앙도서관] Ajou 꾸준 리더(Reader) 프로젝트 : 이달의 꾸준한 리더 찾기",
+    "link": "https://www.ajou.ac.kr/kr/ajou/notice.do?mode=view&articleNo=370423&article.offset=0&articleLimit=50",
+    "date": "2026-06-16",
+    "is_pinned": false
+  },
+  {
+    "title": "[우편취급국] 국내우편 요금 인상 조정 안내",
+    "link": "https://www.ajou.ac.kr/kr/ajou/notice.do?mode=view&articleNo=370422&article.offset=0&articleLimit=50",
+    "date": "2026-06-16",
+    "is_pinned": false
+  },
+  {
+    "title": "[AI융합교육원]2026년도 크래프톤 정글 AI-Powered 웹개발 집중 캠프(8/3~8/14) 참가자 모집",
+    "link": "https://www.ajou.ac.kr/kr/ajou/notice.do?mode=view&articleNo=370412&article.offset=0&articleLimit=50",
+    "date": "2026-06-16",
+    "is_pinned": false
+  },
+  {
+    "title": "학생지원팀 소통 채널 'AJOU ON' 학생 서포터즈 모집 안내(~ 07/03(금)까지)",
+    "link": "https://www.ajou.ac.kr/kr/ajou/notice.do?mode=view&articleNo=370411&article.offset=0&articleLimit=50",
+    "date": "2026-06-16",
+    "is_pinned": false
+  },
+  {
+    "title": "[RISE사업단] 'AI·반도체 글로컬 기업 현장 멘토링 프로그램(2회차)' 참가자 모집!",
+    "link": "https://www.ajou.ac.kr/kr/ajou/notice.do?mode=view&articleNo=370390&article.offset=0&articleLimit=50",
+    "date": "2026-06-16",
+    "is_pinned": false
   },
   {
     "title": "[일자리+센터] [졸특] AJOU26 이공계 취업 올클리어 캠프",
