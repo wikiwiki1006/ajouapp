@@ -1,5 +1,11 @@
 [
   {
+    "title": "[학부]2026-2학기 수강정정 안내(09.01(화)~09.07(월))",
+    "link": "https://www.ajou.ac.kr/kr/ajou/notice.do?mode=view&articleNo=374193&article.offset=0&articleLimit=50",
+    "date": "2026-08-25",
+    "is_pinned": true
+  },
+  {
     "title": "[필독] 2026학년도 2학기 국가장학금 2차 신청안내 (~ 9. 9. 18시까지)",
     "link": "https://www.ajou.ac.kr/kr/ajou/notice.do?mode=view&articleNo=374085&article.offset=0&articleLimit=50",
     "date": "2026-08-24",
@@ -60,16 +66,40 @@
     "is_pinned": true
   },
   {
-    "title": "[학부]2025-2학기 수강정정 안내(09.01(월)~09.05(금))",
-    "link": "https://www.ajou.ac.kr/kr/ajou/notice.do?mode=view&articleNo=353476&article.offset=0&articleLimit=50",
-    "date": "2025-08-25",
-    "is_pinned": true
-  },
-  {
     "title": "[긴급] 교직원 사칭 주의 안내",
     "link": "https://www.ajou.ac.kr/kr/ajou/notice.do?mode=view&articleNo=352588&article.offset=0&articleLimit=50",
     "date": "2025-08-07",
     "is_pinned": true
+  },
+  {
+    "title": "[일자리+센터] ⚡누구보다 빠르고 정확하게 취준하는 법👉 '생성형 AI를 활용한 취업준비 ABC과정' 듣자!📢",
+    "link": "https://www.ajou.ac.kr/kr/ajou/notice.do?mode=view&articleNo=374273&article.offset=0&articleLimit=50",
+    "date": "2026-08-26",
+    "is_pinned": false
+  },
+  {
+    "title": "[글로벌교양학부] 26.2학기 <아주인을 위한 마중물> 동아리 소개 모집",
+    "link": "https://www.ajou.ac.kr/kr/ajou/notice.do?mode=view&articleNo=374267&article.offset=0&articleLimit=50",
+    "date": "2026-08-26",
+    "is_pinned": false
+  },
+  {
+    "title": "[총무팀] 지진 위기경보 수준 \"주의\" 단계 상향에 따른 지진시 국민 행동요령 안내",
+    "link": "https://www.ajou.ac.kr/kr/ajou/notice.do?mode=view&articleNo=374258&article.offset=0&articleLimit=50",
+    "date": "2026-08-26",
+    "is_pinned": false
+  },
+  {
+    "title": "[글로벌교양학부] 2026-2학기 한국어 버디 프로그램 선배 버디 모집 (~8/28(금))",
+    "link": "https://www.ajou.ac.kr/kr/ajou/notice.do?mode=view&articleNo=374254&article.offset=0&articleLimit=50",
+    "date": "2026-08-26",
+    "is_pinned": false
+  },
+  {
+    "title": "[글로벌교양학부](대학원생) 2026-2학기 한국어 글쓰기 클리닉 튜터 모집(~ 8/27(목))",
+    "link": "https://www.ajou.ac.kr/kr/ajou/notice.do?mode=view&articleNo=374253&article.offset=0&articleLimit=50",
+    "date": "2026-08-26",
+    "is_pinned": false
   },
   {
     "title": "(사전안내)[중앙도서관] 📢교수님과 함께 하는 독서 클럽(아주북통) 20기에 활동할 학생을 모집합니다.(~9.7(월) 10:00 마감)",
