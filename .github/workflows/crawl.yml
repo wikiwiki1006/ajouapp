@@ -23,7 +23,28 @@ jobs:
 
       - name: Install dependencies
         run: pip install requests beautifulsoup4
-
+        
+      - name: Diagnose Ajou Network
+        run: |
+          echo "===== RUNNER PUBLIC IP ====="
+          curl -s https://api.ipify.org
+          echo
+      
+          echo "===== DNS ====="
+          getent hosts www.ajou.ac.kr
+      
+          echo "===== TCP CONNECTION ====="
+          nc -vz -w 10 www.ajou.ac.kr 443 || true
+      
+          echo "===== HTTP REQUEST ====="
+          curl -4 -v \
+            --connect-timeout 15 \
+            --max-time 30 \
+            -o /dev/null \
+            -w "\nHTTP: %{http_code}\nConnect: %{time_connect}\nTotal: %{time_total}\n" \
+            "https://www.ajou.ac.kr/kr/life/food.do?mode=view&articleNo=363910&date=2026-11-01" \
+            || true
+          
       - name: Run Crawler
         run: python crawler.py
 
