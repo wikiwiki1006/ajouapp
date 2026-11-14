@@ -2988,5 +2988,18 @@
       "lunch": "정보 없음",
       "dinner": "정보 없음"
     }
+  },
+  "토 (2026-11-21)": {
+    "dormitory": {
+      "breakfast": "정보 없음",
+      "lunch": "정보 없음",
+      "dinner": "정보 없음",
+      "snack": "정보 없음"
+    },
+    "staff": {
+      "breakfast": "정보 없음",
+      "lunch": "정보 없음",
+      "dinner": "정보 없음"
+    }
   }
 }
